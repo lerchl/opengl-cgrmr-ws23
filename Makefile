@@ -1,13 +1,27 @@
-PROGRAM  = app
-CXX      = g++
-CXXFLAGS = -g -std=c++17 -Wall -Wextra -Werror
-INCLUDES = include
-SOURCE   = src
+PROGRAM    = app
+CXX        = g++
+CXXFLAGS   = -g -std=c++17 -Wall -Wextra -Werror
+INCLUDES   = include
+SOURCE     = src
+OUT        = build
+OBJECT_OUT = $(OUT)/object
 
-$(PROGRAM): main.cpp
-	$(CXX) main.cpp $(CXXFLAGS) -o $(PROGRAM) -I $(INCLUDES) -L $(SOURCE) -lglfw -lGLEW -lGL -lGLU -lm
+default: $(PROGRAM)
+
+run: $(PROGRAM)
+	./$(PROGRAM)
+
+clean:
+	rm -r $(OUT)
 
 .PHONY: clean
 
-clean:
-	-rm -f *.o $(PROGRAM) 
+folders:
+	mkdir -p $(OBJECT_OUT)
+
+$(PROGRAM): folders config main.cpp
+	$(CXX) main.cpp $(CXXFLAGS) -o $(PROGRAM) -I $(INCLUDES) $(OBJECT_OUT)/*.o -lglfw -lGLEW -lGL -lGLU -lm
+
+config:
+	$(CXX) $(CXXFLAGS) -o $(OBJECT_OUT)/config.o -c src/config.cpp
+

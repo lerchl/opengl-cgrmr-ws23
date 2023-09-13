@@ -3,6 +3,8 @@
 #include <GL/glew.h>
 #include <iostream>
 
+#include "include/config.h"
+
 void glfwErrorCallback(const int error, const char* description) {
     fprintf(stderr, "Error: %d %s\n", error, description);
 }
@@ -22,7 +24,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(640, 480, "My Title", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT, "My Title", NULL, NULL);
     if (!window) {
         // Window or context creation failed
         std::cerr << "Window or context creation failed!" << std::endl;
@@ -44,9 +46,21 @@ int main(void) {
     // GLEW initialized successfully!
     fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
 
+    int counter = 0;
     while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(counter / 1000.0, counter / 1000.0, counter / 1000.0, 1.0);
+
+        glBegin(GL_TRIANGLES);
+        glVertex2f(-0.5f, -0.5f);
+        glVertex2f( 0.0f,  0.5f);
+        glVertex2f( 0.5f, -0.5f);
+        glEnd();
+
         glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        counter = (counter + 1) % 1000;
     }
 
     glfwDestroyWindow(window);
