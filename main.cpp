@@ -1,69 +1,113 @@
 #define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 
-#include "include/config.h"
+// Vertex Shader
+const char* vertexShaderSource = R"(
+    #version 330 core
+    layout (location = 0) in vec3 aPos;
+    void main() {
+        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    }
+)";
 
-void glfwErrorCallback(const int error, const char* description) {
-    fprintf(stderr, "Error: %d %s\n", error, description);
-}
+// Fragment Shader
+const char* fragmentShaderSource = R"(
+    #version 330 core
+    out vec4 FragColor;
+    void main() {
+        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+    }
+)";
 
-int main(void) {
-    // Set the error callback for GLFW
-    glfwSetErrorCallback(glfwErrorCallback);
-
+int main() {
     // Initialize GLFW
-    if (glfwInit() == GLFW_FALSE) {
-        // GLFW failed!
+    if (!glfwInit()) {
+        std::cerr << "Failed to initialize GLFW" << std::endl;
         return -1;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // Set GLFW to not create an OpenGL context
+    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
 
-    // Create a windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(Config::WINDOW_WIDTH, Config::WINDOW_HEIGHT, "My Title", NULL, NULL);
+    // Create a GLFW windowed mode window and its OpenGL context
+    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Triangle", NULL, NULL);
     if (!window) {
-        // Window or context creation failed
-        std::cerr << "Window or context creation failed!" << std::endl;
+        std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
+        return -1;
     }
 
+    // Make the window's context current
     glfwMakeContextCurrent(window);
 
     // Initialize GLEW
-    glewExperimental = true;
-    GLenum glewInitStatus = glewInit();
-    if (glewInitStatus != GLEW_OK) {
-        // GLEW failed!
-        fprintf(stderr, "Error: %s\n", glewGetErrorString(glewInitStatus));
-        glfwTerminate();
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
 
-    // GLEW initialized successfully!
-    fprintf(stdout, "Status: Using GLEW %s\n", glewGetString(GLEW_VERSION));
+    // Vertex Array Object and Vertex Buffer Object
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
-    int counter = 0;
+    // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 9, nullptr, GL_STATIC_DRAW);
+
+    // Set the vertex attributes pointers
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Compile Shaders
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+
+    // Link the shaders into a program
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    glUseProgram(shaderProgram);
+
+    // Main loop
     while (!glfwWindowShouldClose(window)) {
+        // Render here
         glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(counter / 1000.0, counter / 1000.0, counter / 1000.0, 1.0);
 
-        glBegin(GL_TRIANGLES);
-        glVertex2f(-0.5f, -0.5f);
-        glVertex2f( 0.0f,  0.5f);
-        glVertex2f( 0.5f, -0.5f);
-        glEnd();
+        // Draw the triangle
+        float vertices[] = {
+            -0.5f, -0.5f, 0.0f,
+             0.5f, -0.5f, 0.0f,
+             0.0f,  0.5f, 0.0f
+        };
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // Swap front and back buffers
         glfwSwapBuffers(window);
-        glfwPollEvents();
 
-        counter = (counter + 1) % 1000;
+        // Poll for and process events
+        glfwPollEvents();
     }
 
-    glfwDestroyWindow(window);
+    // Cleanup
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteProgram(shaderProgram);
+
+    // Terminate GLFW
     glfwTerminate();
     return 0;
 }
