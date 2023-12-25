@@ -1,25 +1,67 @@
 #define GLFW_INCLUDE_NONE
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <string>
 
-// Vertex Shader
-const char* vertexShaderSource = R"(
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    void main() {
-        gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    }
-)";
+struct ShaderSources {
+    std::string vertexSource;
+    std::string fragmentSource;
+};
 
-// Fragment Shader
-const char* fragmentShaderSource = R"(
-    #version 330 core
-    out vec4 FragColor;
-    void main() {
-        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+static ShaderSources parseShaders(const std::string &filepath) {
+    std::ifstream stream(filepath);
+    std::string line;
+    std::stringstream ss[2];
+    // 0 = vertex, 1 = fragment
+    int type = -1;
+
+    while (getline(stream, line)) {
+        if (line.find("#shader") == std::string::npos) {
+            ss[(int)type] << line << '\n';
+            continue;
+        }
+
+        if (line.find("vertex") != std::string::npos) {
+            type = 0;
+        } else if (line.find("fragment") != std::string::npos) {
+            type = 1;
+        }
     }
-)";
+
+    return {ss[0].str(), ss[1].str()};
+}
+
+static unsigned int compileShader(unsigned int type,
+                                  const std::string &source) {
+    unsigned int id = glCreateShader(type);
+    const char *src = source.c_str();
+    glShaderSource(id, 1, &src, NULL);
+    glCompileShader(id);
+    // TODO: Error handling
+    return id;
+}
+
+static unsigned int createShader(ShaderSources shaderSources) {
+    unsigned int program = glCreateProgram();
+    unsigned int vertexShader =
+        compileShader(GL_VERTEX_SHADER, shaderSources.vertexSource);
+    unsigned int fragmentShader =
+        compileShader(GL_FRAGMENT_SHADER, shaderSources.fragmentSource);
+
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
+    glValidateProgram(program);
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    return program;
+}
 
 int main() {
     // Initialize GLFW
@@ -32,7 +74,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
 
     // Create a GLFW windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Triangle", NULL, NULL);
+    GLFWwindow *window =
+        glfwCreateWindow(800, 600, "OpenGL Triangle", NULL, NULL);
     if (!window) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -48,50 +91,24 @@ int main() {
         return -1;
     }
 
-    // Vertex Array Object and Vertex Buffer Object
-    GLuint VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    float vertices[] = {-0.5f, -0.5f, 0.0f, 0.5f, 0.5f, -0.5};
 
-    // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-    glBindVertexArray(VAO);
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 9, nullptr, GL_STATIC_DRAW);
-
-    // Set the vertex attributes pointers
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
 
-    // Compile Shaders
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    // Link the shaders into a program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glUseProgram(shaderProgram);
+    unsigned int shader =
+        createShader(parseShaders("resources/shaders/orange.shader"));
+    glUseProgram(shader);
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Render here
         glClear(GL_COLOR_BUFFER_BIT);
-
-        // Draw the triangle
-        float vertices[] = {
-            -0.5f, -0.5f, 0.0f,
-             0.5f, -0.5f, 0.0f,
-             0.0f,  0.5f, 0.0f
-        };
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -102,10 +119,7 @@ int main() {
         glfwPollEvents();
     }
 
-    // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
+    glDeleteProgram(shader);
 
     // Terminate GLFW
     glfwTerminate();
