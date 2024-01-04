@@ -10,7 +10,9 @@
 #include "config.h"
 #include "error_handling.h"
 #include "index_buffer.h"
+#include "renderer.h"
 #include "shader.h"
+#include "texture.h"
 #include "vertex_array.h"
 #include "vertex_buffer.h"
 
@@ -44,12 +46,21 @@ int main() {
         return -1;
     }
 
-    float vertices[] = {-0.5f, -0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f};
-    unsigned int indices[] = {0, 1, 2, 2, 3, 0};
+    float vertices[] = {
+        -0.5f, -0.5f, 0.0f, 0.0f,  // 0
+         0.5f, -0.5f, 1.0f, 0.0f,  // 1
+         0.5f,  0.5f, 1.0f, 1.0f,  // 2
+        -0.5f,  0.5f, 0.0f, 1.0f,  // 3
+    };
+    unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
+
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    GLCall(glEnable((GL_BLEND)));
 
     VertexArray va;
-    VertexBuffer vb(vertices, 4 * 2 * sizeof(float));
+    VertexBuffer vb(vertices, 4 * 4 * sizeof(float));
     VertexBufferLayout layout;
+    layout.push<float>(2);
     layout.push<float>(2);
     va.addBuffer(vb, layout);
     IndexBuffer ib(indices, 6);
@@ -57,25 +68,29 @@ int main() {
     Shader shader("resources/shaders/shader.shader");
     shader.bind();
     shader.setUniform4f("u_color", 0.2f, 0.3f, 0.8f, 1.0f);
-    shader.unbind();
+
+    Texture texture("resources/textures/cat.png");
+    texture.bind();
+    shader.setUniform1i("u_texture", 0);
 
     vb.unbind();
+    vb.unbind();
     ib.unbind();
+    shader.unbind();
+
+    Renderer renderer;
 
     float r = 0.0f;
     float increment = 0.05f;
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Render here
-        GLCall(glClear(GL_COLOR_BUFFER_BIT));
+        renderer.clear();
 
         shader.bind();
         shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
 
-        va.bind();
-        ib.bind();
-
-        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+        renderer.draw(va, ib, shader);
 
         if (r > 1.0f) {
             increment = -0.05f;

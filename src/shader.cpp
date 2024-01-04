@@ -7,8 +7,7 @@
 
 #include "error_handling.h"
 
-Shader::Shader(const std::string& filepath) :
-        rendererId(createShader(parseShaders(filepath))) {
+Shader::Shader(const std::string& filepath) : rendererId(createShader(parseShaders(filepath))) {
     // noop
 }
 
@@ -22,6 +21,10 @@ void Shader::bind() const {
 
 void Shader::unbind() const {
     GLCall(glUseProgram(0));
+}
+
+void Shader::setUniform1i(const std::string& name, int value) {
+    GLCall(glUniform1i(getUniformLocation(name), value));
 }
 
 void Shader::setUniform4f(const std::string& name, float v0, float v1, float v2, float v3) {
