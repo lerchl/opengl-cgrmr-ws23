@@ -6,8 +6,10 @@ layout(location = 1) in vec2 textureCoordinates;
 
 out vec2 v_textureCoordinates;
 
+uniform mat4 u_modelViewProjectionMatrix;
+
 void main() {
-    gl_Position = position;
+    gl_Position = u_modelViewProjectionMatrix * position;
     v_textureCoordinates = textureCoordinates;
 };
 

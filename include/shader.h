@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include <string>
 
+#include "glm/glm.hpp"
+
 struct ShaderSources {
     std::string vertexSource;
     std::string fragmentSource;
@@ -18,6 +20,7 @@ class Shader {
 
         void setUniform1i(const std::string& name, int value);
         void setUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
+        void setUniformMat4f(const std::string& name, const glm::mat4& matrix);
     private:
         unsigned int rendererId;
         std::unordered_map<std::string, int> uniformLocationCache;

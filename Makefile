@@ -21,7 +21,7 @@ folders:
 	mkdir -p $(OBJECT_OUT)
 
 $(PROGRAM): folders config error_handling vertex_buffer index_buffer vertex_array vertex_buffer_layout shader renderer texture lib_stb_image main.cpp
-	$(CXX) main.cpp $(CXXFLAGS) -o $(PROGRAM) -I $(INCLUDES) $(OBJECT_OUT)/*.o -lglfw -lGLEW -lGL -lGLU -lm
+	$(CXX) main.cpp $(CXXFLAGS) -o $(PROGRAM) -I $(INCLUDES) -I $(LIB) $(OBJECT_OUT)/*.o -lglfw -lGLEW -lGL -lGLU -lm
 
 config:
 	$(CXX) $(CXXFLAGS) -I $(INCLUDES) -I $(LIB) -o $(OBJECT_OUT)/config.o -c $(SOURCE)/config.cpp

@@ -7,6 +7,9 @@
 #include <sstream>
 #include <string>
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 #include "config.h"
 #include "error_handling.h"
 #include "index_buffer.h"
@@ -47,10 +50,10 @@ int main() {
     }
 
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, 0.0f,  // 0
-         0.5f, -0.5f, 1.0f, 0.0f,  // 1
-         0.5f,  0.5f, 1.0f, 1.0f,  // 2
-        -0.5f,  0.5f, 0.0f, 1.0f,  // 3
+        100.0f, 100.0f, 0.0f, 0.0f,  // 0
+        200.0f, 100.0f, 1.0f, 0.0f,  // 1
+        200.0f, 200.0f, 1.0f, 1.0f,  // 2
+        100.0f, 200.0f, 0.0f, 1.0f,  // 3
     };
     unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 
@@ -65,9 +68,12 @@ int main() {
     va.addBuffer(vb, layout);
     IndexBuffer ib(indices, 6);
 
+    glm::mat4 proj = glm::ortho(0.0f, (float) Config::WINDOW_WIDTH, 0.0f, (float) Config::WINDOW_HEIGHT, -1.0f, 1.0f);
+
     Shader shader("resources/shaders/shader.shader");
     shader.bind();
     shader.setUniform4f("u_color", 0.2f, 0.3f, 0.8f, 1.0f);
+    shader.setUniformMat4f("u_modelViewProjectionMatrix", proj);
 
     Texture texture("resources/textures/cat.png");
     texture.bind();
