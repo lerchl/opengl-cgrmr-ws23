@@ -19,6 +19,10 @@
 #include "vertex_array.h"
 #include "vertex_buffer.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 int main() {
     // Initialize GLFW
     if (!glfwInit()) {
@@ -50,11 +54,12 @@ int main() {
     }
 
     float vertices[] = {
-        100.0f, 100.0f, 0.0f, 0.0f,  // 0
-        200.0f, 100.0f, 1.0f, 0.0f,  // 1
-        200.0f, 200.0f, 1.0f, 1.0f,  // 2
-        100.0f, 200.0f, 0.0f, 1.0f,  // 3
+        -50.0f, -50.0f, 0.0f, 0.0f,  // 0
+         50.0f, -50.0f, 1.0f, 0.0f,  // 1
+         50.0f,  50.0f, 1.0f, 1.0f,  // 2
+        -50.0f,  50.0f, 0.0f, 1.0f,  // 3
     };
+
     unsigned int indices[] = { 0, 1, 2, 2, 3, 0 };
 
     GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -69,11 +74,15 @@ int main() {
     IndexBuffer ib(indices, 6);
 
     glm::mat4 proj = glm::ortho(0.0f, (float) Config::WINDOW_WIDTH, 0.0f, (float) Config::WINDOW_HEIGHT, -1.0f, 1.0f);
+    glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
+    // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0));
+
+    // glm::mat4 mvp = proj * view * model;
 
     Shader shader("resources/shaders/shader.shader");
     shader.bind();
     shader.setUniform4f("u_color", 0.2f, 0.3f, 0.8f, 1.0f);
-    shader.setUniformMat4f("u_modelViewProjectionMatrix", proj);
+    // shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
 
     Texture texture("resources/textures/cat.png");
     texture.bind();
@@ -86,6 +95,16 @@ int main() {
 
     Renderer renderer;
 
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+
+    glm::vec3 translation(200, 200, 0);
+
     float r = 0.0f;
     float increment = 0.05f;
     // Main loop
@@ -93,8 +112,16 @@ int main() {
         // Render here
         renderer.clear();
 
+        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui::NewFrame();
+
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
+        glm::mat4 mvp = proj * view * model;
+
         shader.bind();
         shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
+        shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
 
         renderer.draw(va, ib, shader);
 
@@ -106,12 +133,25 @@ int main() {
 
         r += increment;
 
+        {
+            ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 800.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        }
+
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         // Swap front and back buffers
         glfwSwapBuffers(window);
 
         // Poll for and process events
         glfwPollEvents();
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     // Terminate GLFW
     glfwTerminate();
