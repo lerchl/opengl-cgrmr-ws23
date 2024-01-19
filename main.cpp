@@ -75,9 +75,6 @@ int main() {
 
     glm::mat4 proj = glm::ortho(0.0f, (float) Config::WINDOW_WIDTH, 0.0f, (float) Config::WINDOW_HEIGHT, -1.0f, 1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
-    // glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(200, 200, 0));
-
-    // glm::mat4 mvp = proj * view * model;
 
     Shader shader("resources/shaders/shader.shader");
     shader.bind();
@@ -103,7 +100,8 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
-    glm::vec3 translation(200, 200, 0);
+    glm::vec3 translationA(200, 200, 0);
+    glm::vec3 translationB(400, 200, 0);
 
     float r = 0.0f;
     float increment = 0.05f;
@@ -116,14 +114,25 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
 
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
-        glm::mat4 mvp = proj * view * model;
-
-        shader.bind();
-        shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
-        shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
-
-        renderer.draw(va, ib, shader);
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+            glm::mat4 mvp = proj * view * model;
+            shader.bind();
+            shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
+            shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+        
+            renderer.draw(va, ib, shader);
+        }
+        
+        {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
+            glm::mat4 mvp = proj * view * model;
+            shader.bind();
+            shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
+            shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+        
+            renderer.draw(va, ib, shader);
+        }
 
         if (r > 1.0f) {
             increment = -0.05f;
@@ -134,7 +143,8 @@ int main() {
         r += increment;
 
         {
-            ImGui::SliderFloat3("Translation", &translation.x, 0.0f, 800.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 800.0f);
+            ImGui::SliderFloat3("Translation B", &translationB.x, 0.0f, 800.0f);           
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
         }
 
@@ -149,6 +159,7 @@ int main() {
         glfwPollEvents();
     }
 
+    // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
