@@ -76,19 +76,23 @@ int main() {
     glm::mat4 proj = glm::ortho(0.0f, (float) Config::WINDOW_WIDTH, 0.0f, (float) Config::WINDOW_HEIGHT, -1.0f, 1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
-    Shader shader("resources/shaders/shader.shader");
-    shader.bind();
-    shader.setUniform4f("u_color", 0.2f, 0.3f, 0.8f, 1.0f);
-    // shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+    Shader alien_shader("resources/shaders/shader.shader");
+    Texture alien_texture("resources/textures/cat.png");
+    alien_shader.setUniform1i("u_texture", 0);
 
-    Texture texture("resources/textures/cat.png");
-    texture.bind();
-    shader.setUniform1i("u_texture", 0);
+    alien_shader.unbind();
+    alien_texture.unbind();
 
-    vb.unbind();
+    Shader spaceship_shader("resources/shaders/spaceship.shader");
+    Texture spaceship_texture("resources/textures/spaceship_fire1.png");
+    spaceship_shader.setUniform1i("u_texture", 0);
+    
+    spaceship_shader.unbind();
+    spaceship_texture.unbind();
+
+    va.unbind();
     vb.unbind();
     ib.unbind();
-    shader.unbind();
 
     Renderer renderer;
 
@@ -103,8 +107,21 @@ int main() {
     glm::vec3 translationA(200, 200, 0);
     glm::vec3 translationB(400, 200, 0);
 
-    float r = 0.0f;
-    float increment = 0.05f;
+    glm::vec3 spaceship_position(500, 100, 0);
+
+    std::vector<glm::vec3> alien_positions = {
+        // first row
+        glm::vec3(200, 400, 0),
+        glm::vec3(400, 400, 0),
+        glm::vec3(600, 400, 0),
+        glm::vec3(800, 400, 0),
+        // second row
+        glm::vec3(200, 600, 0),
+        glm::vec3(400, 600, 0),
+        glm::vec3(600, 600, 0),
+        glm::vec3(800, 600, 0)
+    };
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Render here
@@ -115,32 +132,21 @@ int main() {
         ImGui::NewFrame();
 
         {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationA);
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), spaceship_position);
             glm::mat4 mvp = proj * view * model;
-            shader.bind();
-            shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
-            shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
-        
-            renderer.draw(va, ib, shader);
-        }
-        
-        {
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translationB);
-            glm::mat4 mvp = proj * view * model;
-            shader.bind();
-            shader.setUniform4f("u_color", r, 0.3f, 0.8f, 1.0f);
-            shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
-        
-            renderer.draw(va, ib, shader);
+            spaceship_shader.bind();
+            spaceship_shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+            renderer.draw(va, ib, spaceship_shader);
         }
 
-        if (r > 1.0f) {
-            increment = -0.05f;
-        } else if (r < 0.0f) {
-            increment = 0.05f;
+        for (const auto& position : alien_positions) {
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
+            glm::mat4 mvp = proj * view * model;
+            alien_shader.bind();
+            alien_shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+        
+            renderer.draw(va, ib, alien_shader);
         }
-
-        r += increment;
 
         {
             ImGui::SliderFloat3("Translation A", &translationA.x, 0.0f, 800.0f);

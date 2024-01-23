@@ -8,7 +8,7 @@
 #include "error_handling.h"
 
 Shader::Shader(const std::string& filepath) : rendererId(createShader(parseShaders(filepath))) {
-    // noop
+   bind(); 
 }
 
 Shader::~Shader() {
