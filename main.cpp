@@ -79,12 +79,16 @@ int main() {
     // Aliens
     Shader alien_shader("resources/shaders/shader.shader");
     Texture alien_texture("resources/textures/cat.png");
+    // Texture alien_normal_map("resources/textures/cat_normal_map.png");
     alien_shader.setUniform1i("u_texture", 0);
+    // alien_shader.setUniform1i("u_normalMap", 1);
     
     // Spaceship
     Shader spaceship_shader("resources/shaders/spaceship.shader");
     Texture spaceship_texture("resources/textures/spaceship_fire1.png");
+    Texture spaceship_normal_map("resources/textures/spaceship_normal_map.png");
     spaceship_shader.setUniform1i("u_texture", 0);
+    spaceship_shader.setUniform1i("u_normalMap", 1); 
 
     va.unbind();
     vb.unbind();
@@ -128,6 +132,7 @@ int main() {
         {
             spaceship_shader.bind();
             spaceship_texture.bind();
+            spaceship_normal_map.bind(1);
 
             glm::mat4 model = glm::translate(glm::mat4(1.0f), spaceship_position);
             glm::mat4 mvp = proj * view * model;
@@ -137,12 +142,14 @@ int main() {
 
             spaceship_texture.unbind();
             spaceship_shader.unbind();
+            spaceship_normal_map.unbind();
         }
 
         // Draw aliens
         {
             alien_shader.bind();
             alien_texture.bind();
+            // alien_normal_map.bind(1);
 
             for (const auto& position : alien_positions) {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
@@ -154,6 +161,7 @@ int main() {
 
             alien_texture.unbind();
             alien_shader.unbind();
+            // alien_normal_map.unbind();
         }
 
         {
