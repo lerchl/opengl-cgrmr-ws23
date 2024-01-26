@@ -152,8 +152,8 @@ int main() {
             }
 
             // Keep the spaceship within the window bounds
-            if (spaceship_position.x < 0.0f) {
-                spaceship_position.x = 0.0f;
+            if (spaceship_position.x < 50.0f) {
+                spaceship_position.x = 50.0f;
             }
             if (spaceship_position.x > Config::WINDOW_WIDTH - 50.0f) {
                 spaceship_position.x = Config::WINDOW_WIDTH - 50.0f;
@@ -178,10 +178,17 @@ int main() {
 
             for (auto& position : alien_positions) {
                 position.x += alien_speed * static_cast<float>(deltaTime);
+                 
+                // Check if aliens hit the right window edge
+                if (position.x > Config::WINDOW_WIDTH - 50.0f) {
+                    position.x = Config::WINDOW_WIDTH - 50.0f;
+                    alien_speed = -alien_speed; // Reverse direction
+                }
 
-                // Wrap around when aliens go beyond the right edge
-                if (position.x > Config::WINDOW_WIDTH) {
-                    position.x = -50.0f; // Reset to the left side
+                // Check if aliens hit the left window edge
+                if (position.x < 50.0f) {
+                    position.x = 50.0f;
+                    alien_speed = -alien_speed; // Reverse direction
                 }
                 
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
