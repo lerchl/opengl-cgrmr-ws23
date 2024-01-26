@@ -119,6 +119,12 @@ int main() {
         glm::vec3(800, 600, 0)
     };
 
+    // speed
+    float spaceship_speed = 600.0f; 
+    float alien_speed = 400.0f;
+
+    double lastFrameTime = glfwGetTime();
+
     // Main loop
     while (!glfwWindowShouldClose(window)) {
         // Render here
@@ -128,11 +134,30 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();
 
+        double currentFrameTime = glfwGetTime();
+        double deltaTime = currentFrameTime - lastFrameTime;
+
         // Draw spaceship
         {
             spaceship_shader.bind();
             spaceship_texture.bind();
             spaceship_normal_map.bind(1);
+
+            // Move spaceship based on key input
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+                spaceship_position.x -= spaceship_speed * static_cast<float>(deltaTime);
+            }
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+                spaceship_position.x += spaceship_speed * static_cast<float>(deltaTime);
+            }
+
+            // Keep the spaceship within the window bounds
+            if (spaceship_position.x < 0.0f) {
+                spaceship_position.x = 0.0f;
+            }
+            if (spaceship_position.x > Config::WINDOW_WIDTH - 50.0f) {
+                spaceship_position.x = Config::WINDOW_WIDTH - 50.0f;
+            }
 
             glm::mat4 model = glm::translate(glm::mat4(1.0f), spaceship_position);
             glm::mat4 mvp = proj * view * model;
@@ -151,7 +176,14 @@ int main() {
             alien_texture.bind();
             // alien_normal_map.bind(1);
 
-            for (const auto& position : alien_positions) {
+            for (auto& position : alien_positions) {
+                position.x += alien_speed * static_cast<float>(deltaTime);
+
+                // Wrap around when aliens go beyond the right edge
+                if (position.x > Config::WINDOW_WIDTH) {
+                    position.x = -50.0f; // Reset to the left side
+                }
+                
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
                 glm::mat4 mvp = proj * view * model;
                 alien_shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
@@ -163,6 +195,8 @@ int main() {
             alien_shader.unbind();
             // alien_normal_map.unbind();
         }
+
+        lastFrameTime = currentFrameTime;
 
         {
             ImGui::SliderFloat3("Spaceship Position", &spaceship_position.x, 0.0f, 800.0f);        
