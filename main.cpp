@@ -76,12 +76,17 @@ int main() {
     glm::mat4 proj = glm::ortho(0.0f, (float) Config::WINDOW_WIDTH, 0.0f, (float) Config::WINDOW_HEIGHT, -1.0f, 1.0f);
     glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
 
+    // Background
+    Shader background_shader("resources/shaders/moon.shader");
+    Texture background_texture("resources/textures/moon.png");
+    Texture background_normal_map("resources/textures/moon_normal_map.png");
+    background_shader.setUniform1i("u_texture", 0);
+    background_shader.setUniform1i("u_normalMap", 1);
+
     // Aliens
     Shader alien_shader("resources/shaders/shader.shader");
     Texture alien_texture("resources/textures/cat.png");
-    // Texture alien_normal_map("resources/textures/cat_normal_map.png");
     alien_shader.setUniform1i("u_texture", 0);
-    // alien_shader.setUniform1i("u_normalMap", 1);
     
     // Spaceship
     Shader spaceship_shader("resources/shaders/spaceship.shader");
@@ -145,6 +150,37 @@ int main() {
 
         double currentFrameTime = glfwGetTime();
         double deltaTime = currentFrameTime - lastFrameTime;
+
+        // Draw background
+        {
+            background_shader.bind();
+            background_texture.bind(); 
+            background_normal_map.bind(1);
+
+            // Draw a quad covering the entire window
+            float quadVertices[] = {
+                -1.0f, -1.0f, 0.0f, 0.0f,
+                 1.0f, -1.0f, 1.0f, 0.0f,
+                 1.0f,  1.0f, 1.0f, 1.0f,
+                -1.0f,  1.0f, 0.0f, 1.0f
+            };
+
+            VertexArray background_va;
+            VertexBuffer background_vb(quadVertices, 4 * 4 * sizeof(float));
+            VertexBufferLayout background_layout;
+
+            background_layout.push<float>(2);
+            background_layout.push<float>(2);
+            background_va.addBuffer(background_vb, background_layout);
+
+            IndexBuffer background_ib(indices, 6);
+
+            renderer.draw(background_va, background_ib, background_shader);
+
+            background_texture.unbind();
+            background_shader.unbind();
+            background_normal_map.unbind();
+        }
 
         // Draw spaceship
         {
@@ -214,7 +250,6 @@ int main() {
         {
             alien_shader.bind();
             alien_texture.bind();
-            // alien_normal_map.bind(1);
 
             for (auto& position : alien_positions) {
                 position.x += alien_speed * static_cast<float>(deltaTime);
@@ -240,7 +275,6 @@ int main() {
 
             alien_texture.unbind();
             alien_shader.unbind();
-            // alien_normal_map.unbind();
         }
 
         // Check if bullet hit an alien
