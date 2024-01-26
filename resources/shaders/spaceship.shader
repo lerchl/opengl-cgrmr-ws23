@@ -33,8 +33,18 @@ void main() {
     // Fetch the color from the texture
     vec3 baseColor = texture(u_texture, v_textureCoordinates).rgb;
 
+    if (baseColor == vec3(0.0)) {
+        color = vec4(0.0);
+        return;
+    }
+
     // Fetch the normal from the normal map
     vec3 normalMap = texture(u_normalMap, v_textureCoordinates).xyz;
+
+    if (normalMap == vec3(0.0)) {
+        color = vec4(baseColor, 1.0);
+        return;
+    }
 
     // Convert normal map values from [0, 1] to [-1, 1]
     normalMap = normalize(normalMap * 2.0 - 1.0);

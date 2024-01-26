@@ -2,9 +2,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
 
 #include "glm/glm.hpp"
@@ -90,10 +88,12 @@ int main() {
     
     // Spaceship
     Shader spaceship_shader("resources/shaders/spaceship.shader");
-    Texture spaceship_texture("resources/textures/spaceship_fire1.png");
-    Texture spaceship_normal_map("resources/textures/spaceship_normal_map.png");
+    Texture spaceship_texture1("resources/textures/spaceship_red1.png");
+    Texture spaceship_normal_map("resources/textures/spaceship_red_normal_map.png");
     spaceship_shader.setUniform1i("u_texture", 0);
     spaceship_shader.setUniform1i("u_normalMap", 1); 
+    Texture spaceship_texture2("resources/textures/spaceship_red2.png");
+    Texture spaceship_texture3("resources/textures/spaceship_red3.png");
 
     // Bullets
     Shader bullet_shader("resources/shaders/shader.shader");
@@ -138,6 +138,7 @@ int main() {
 
     double lastFrameTime = glfwGetTime();
     double lastBulletTime = glfwGetTime();
+    double spaceship_animation_cycle_time = glfwGetTime();
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -185,7 +186,21 @@ int main() {
         // Draw spaceship
         {
             spaceship_shader.bind();
+            Texture& spaceship_texture = spaceship_texture1;
+
+            if (currentFrameTime - spaceship_animation_cycle_time < 0.25f) {
+                spaceship_texture = spaceship_texture1;
+            } else if (currentFrameTime - spaceship_animation_cycle_time > 0.25f && currentFrameTime - spaceship_animation_cycle_time < 0.5f) {
+                spaceship_texture = spaceship_texture2;
+            } else if (currentFrameTime - spaceship_animation_cycle_time >= 0.5f && currentFrameTime - spaceship_animation_cycle_time < 0.75f) {
+                spaceship_texture = spaceship_texture3;
+            } else if (currentFrameTime - spaceship_animation_cycle_time >= 0.75f) {
+                spaceship_animation_cycle_time = currentFrameTime;
+            }
+
             spaceship_texture.bind();
+            spaceship_shader.setUniform1i("u_texture", 0);
+
             spaceship_normal_map.bind(1);
 
             // Move spaceship based on key input
