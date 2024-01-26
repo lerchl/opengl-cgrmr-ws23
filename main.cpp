@@ -76,10 +76,11 @@ int main() {
 
     // Background
     Shader background_shader("resources/shaders/moon.shader");
-    Texture background_texture("resources/textures/moon.png");
+    Texture background_texture("resources/textures/moon.png", GL_REPEAT);
     Texture background_normal_map("resources/textures/moon_normal_map.png");
     background_shader.setUniform1i("u_texture", 0);
     background_shader.setUniform1i("u_normalMap", 1);
+    background_shader.setUniform1f("u_time", 0.0f);
 
     // Aliens
     Shader alien_shader("resources/shaders/shader.shader");
@@ -136,6 +137,7 @@ int main() {
     float bullet_speed = 1000.0f;
     float alien_speed = 400.0f;
 
+    double start_time = glfwGetTime();
     double lastFrameTime = glfwGetTime();
     double lastBulletTime = glfwGetTime();
     double spaceship_animation_cycle_time = glfwGetTime();
@@ -155,8 +157,9 @@ int main() {
         // Draw background
         {
             background_shader.bind();
-            background_texture.bind(); 
+            background_texture.bind();
             background_normal_map.bind(1);
+            background_shader.setUniform1f("u_time", start_time);
 
             // Draw a quad covering the entire window
             float quadVertices[] = {

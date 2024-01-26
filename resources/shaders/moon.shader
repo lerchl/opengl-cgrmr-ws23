@@ -20,13 +20,14 @@ in vec2 v_textureCoordinates;
 
 uniform sampler2D u_texture;
 uniform sampler2D u_normalMap; // New normal map texture
+uniform float u_time;
 
 void main() {
     // Fetch the color from the texture
-    vec3 baseColor = texture(u_texture, v_textureCoordinates).rgb;
+    vec3 baseColor = texture(u_texture, v_textureCoordinates.x, v_textureCoordinates.y + u_time).rgb;
 
     // Fetch the normal from the normal map
-    vec3 normalMap = texture(u_normalMap, v_textureCoordinates).xyz;
+    vec3 normalMap = texture(u_normalMap, v_textureCoordinates.x, v_textureCoordinates.y + u_time).xyz;
 
     // Convert normal map values from [0, 1] to [-1, 1]
     normalMap = normalize(normalMap * 2.0 - 1.0);
@@ -40,5 +41,5 @@ void main() {
     // Combine base color with lighting
     vec3 finalColor = baseColor * lighting;
 
-    color = vec4(finalColor, 1.0);
+    color = vec4(finalColor, .5);
 };
