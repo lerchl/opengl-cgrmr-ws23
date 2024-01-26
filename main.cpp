@@ -90,6 +90,11 @@ int main() {
     spaceship_shader.setUniform1i("u_texture", 0);
     spaceship_shader.setUniform1i("u_normalMap", 1); 
 
+    // Bullets
+    Shader bullet_shader("resources/shaders/shader.shader");
+    Texture bullet_texture("resources/textures/fish.png");
+    bullet_shader.setUniform1i("u_texture", 0);
+
     va.unbind();
     vb.unbind();
     ib.unbind();
@@ -106,6 +111,8 @@ int main() {
 
     glm::vec3 spaceship_position(500, 100, 0);
 
+    std::vector<glm::vec3> bullet_positions;
+
     std::vector<glm::vec3> alien_positions = {
         // first row
         glm::vec3(200, 400, 0),
@@ -121,9 +128,11 @@ int main() {
 
     // speed
     float spaceship_speed = 600.0f; 
+    float bullet_speed = 1000.0f;
     float alien_speed = 400.0f;
 
     double lastFrameTime = glfwGetTime();
+    double lastBulletTime = glfwGetTime();
 
     // Main loop
     while (!glfwWindowShouldClose(window)) {
@@ -150,6 +159,12 @@ int main() {
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
                 spaceship_position.x += spaceship_speed * static_cast<float>(deltaTime);
             }
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS
+                    && currentFrameTime - lastBulletTime > 0.1f
+                    && bullet_positions.size() < 3) {
+                bullet_positions.push_back(spaceship_position);
+                lastBulletTime = currentFrameTime;
+            }
 
             // Keep the spaceship within the window bounds
             if (spaceship_position.x < 50.0f) {
@@ -168,6 +183,31 @@ int main() {
             spaceship_texture.unbind();
             spaceship_shader.unbind();
             spaceship_normal_map.unbind();
+        }
+
+        // Draw bullets
+        {
+            bullet_shader.bind();
+            bullet_texture.bind();
+
+            for (int i = bullet_positions.size() - 1; i >= 0; i--) {
+                auto& position = bullet_positions[i];
+                position.y += bullet_speed * static_cast<float>(deltaTime);
+
+                // Check if bullet hit the top window edge
+                if (position.y > Config::WINDOW_HEIGHT) {
+                    bullet_positions.erase(bullet_positions.begin() + i);
+                }
+
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
+                glm::mat4 mvp = proj * view * model;
+                bullet_shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+
+                renderer.draw(va, ib, bullet_shader);
+            }
+
+            bullet_texture.unbind();
+            bullet_shader.unbind();
         }
 
         // Draw aliens
@@ -201,6 +241,21 @@ int main() {
             alien_texture.unbind();
             alien_shader.unbind();
             // alien_normal_map.unbind();
+        }
+
+        // Check if bullet hit an alien
+        for (int i = bullet_positions.size() - 1; i >= 0; i--) {
+            auto& bullet_position = bullet_positions[i];
+            for (int j = alien_positions.size() - 1; j >= 0; j--) {
+                auto& alien_position = alien_positions[j];
+                if (bullet_position.x > alien_position.x - 50.0f
+                        && bullet_position.x < alien_position.x + 50.0f
+                        && bullet_position.y > alien_position.y - 50.0f
+                        && bullet_position.y < alien_position.y + 50.0f) {
+                    bullet_positions.erase(bullet_positions.begin() + i);
+                    alien_positions.erase(alien_positions.begin() + j);
+                }
+            }
         }
 
         lastFrameTime = currentFrameTime;
