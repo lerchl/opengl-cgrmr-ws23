@@ -6,7 +6,7 @@
 
 class Texture {
    public:
-    Texture(const std::string& filepath, const int vertical_wrap = GL_CLAMP_TO_EDGE);
+    Texture(const std::string& filepath);
     ~Texture();
 
     void bind(unsigned int slot = 0) const;
