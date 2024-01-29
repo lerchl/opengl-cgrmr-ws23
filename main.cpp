@@ -86,7 +86,7 @@ int main() {
     Shader alien_shader("resources/shaders/shader.shader");
     Texture alien_texture("resources/textures/cat.png");
     alien_shader.setUniform1i("u_texture", 0);
-    
+
     // Spaceship
     Shader spaceship_shader("resources/shaders/spaceship.shader");
     Texture spaceship_texture1("resources/textures/spaceship_red1.png");
@@ -258,6 +258,7 @@ int main() {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
                 glm::mat4 mvp = proj * view * model;
                 bullet_shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+                bullet_shader.setUniformVec3f("u_lightPosition", spaceship_position);
 
                 renderer.draw(va, ib, bullet_shader);
             }
@@ -289,6 +290,7 @@ int main() {
                 glm::mat4 model = glm::translate(glm::mat4(1.0f), position);
                 glm::mat4 mvp = proj * view * model;
                 alien_shader.setUniformMat4f("u_modelViewProjectionMatrix", mvp);
+                alien_shader.setUniformVec3f("u_lightPosition", spaceship_position);
 
                 renderer.draw(va, ib, alien_shader);
             }
